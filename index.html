@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>爆款文案生成器 | AI帮你写小红书抖音朋友圈</title>
+<style>
+:root {
+  --bg: #0f0f1a;
+  --card: #1a1a2e;
+  --card2: #16213e;
+  --accent: #ff2d55;
+  --accent2: #ff6b81;
+  --gold: #ffd700;
+  --text: #e8e8f0;
+  --text2: #a0a0b8;
+  --border: #2a2a40;
+  --green: #00d26a;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { 
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg); color: var(--text); min-height:100vh;
+  overflow-x: hidden;
+}
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top:0; z-index:100;
+  border-bottom:1px solid var(--border);
+}
+.logo { font-size:18px; font-weight:800; background:linear-gradient(135deg, #ff2d55, #ff6b81); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.header-cta {
+  background:linear-gradient(135deg, #ff2d55, #ff6b81);
+  color:#fff; border:none; padding:8px 18px; border-radius:20px;
+  font-size:13px; font-weight:600; cursor:pointer;
+}
+
+/* Hero */
+.hero { padding:40px 20px 30px; text-align:center; max-width:600px; margin:0 auto; }
+.hero h1 { font-size:28px; font-weight:900; line-height:1.3; margin-bottom:12px; }
+.hero h1 .hl { background:linear-gradient(135deg, #ffd700, #ffaa00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.hero p { color:var(--text2); font-size:14px; line-height:1.6; }
+
+/* Stats */
+.quick-stats { display:flex; justify-content:center; gap:24px; margin:20px 0; flex-wrap:wrap; }
+.stat-item { text-align:center; }
+.stat-num { font-size:24px; font-weight:900; color:var(--gold); }
+.stat-label { font-size:11px; color:var(--text2); margin-top:2px; }
+
+/* Main container */
+.container { max-width:680px; margin:0 auto; padding:0 16px 100px; }
+
+/* Tool card */
+.tool-card {
+  background:var(--card); border-radius:16px; padding:20px;
+  border:1px solid var(--border); margin-bottom:16px;
+}
+.tool-card h3 { font-size:16px; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+.tool-card .desc { font-size:12px; color:var(--text2); margin-bottom:16px; }
+
+/* Tabs */
+.tabs { display:flex; gap:4px; margin-bottom:16px; background:var(--bg); border-radius:10px; padding:4px; }
+.tab { flex:1; text-align:center; padding:8px; border-radius:8px; cursor:pointer; font-size:13px; color:var(--text2); transition:all 0.2s; border:none; background:transparent; }
+.tab.active { background:var(--accent); color:#fff; }
+
+/* Inputs */
+.input-group { margin-bottom:12px; }
+.input-group label { display:block; font-size:12px; color:var(--text2); margin-bottom:4px; }
+.input-group input, .input-group textarea, .input-group select {
+  width:100%; background:var(--bg); border:1px solid var(--border);
+  border-radius:10px; padding:10px 14px; color:var(--text); font-size:14px;
+  font-family:inherit; resize:vertical;
+}
+.input-group textarea { min-height:80px; }
+.input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+  outline:none; border-color:var(--accent);
+}
+
+/* Preset buttons */
+.presets { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+.preset {
+  padding:6px 12px; border-radius:20px; border:1px solid var(--border);
+  background:transparent; color:var(--text2); font-size:11px; cursor:pointer;
+  white-space:nowrap;
+}
+.preset:hover, .preset.active { border-color:var(--accent); color:var(--accent); }
+
+/* Generate button */
+.gen-btn {
+  width:100%; padding:14px; border-radius:12px; border:none;
+  background:linear-gradient(135deg, #ff2d55, #ff6b81);
+  color:#fff; font-size:16px; font-weight:700; cursor:pointer;
+  margin-top:8px; transition:transform 0.15s;
+}
+.gen-btn:active { transform:scale(0.97); }
+.gen-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.gen-btn .count { font-size:12px; opacity:0.8; font-weight:400; }
+
+/* Result */
+.result { display:none; margin-top:16px; }
+.result.show { display:block; }
+.result-content {
+  background:var(--bg); border-radius:12px; padding:16px;
+  border:1px solid var(--border); font-size:14px; line-height:1.8;
+  white-space:pre-wrap; min-height:100px;
+}
+.result-actions { display:flex; gap:8px; margin-top:12px; }
+.result-actions button {
+  flex:1; padding:10px; border-radius:10px; border:1px solid var(--border);
+  background:var(--card2); color:var(--text); font-size:13px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:4px;
+}
+.result-actions button:hover { border-color:var(--accent); }
+
+/* Toast */
+.toast {
+  position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+  background:#333; color:#fff; padding:10px 20px; border-radius:20px;
+  font-size:13px; z-index:999; opacity:0; transition:opacity 0.3s;
+}
+.toast.show { opacity:1; }
+
+/* Pricing */
+.pricing-section { padding:0 0 40px; }
+.pricing-section h2 { text-align:center; font-size:22px; margin-bottom:4px; }
+.pricing-section .psub { text-align:center; color:var(--text2); font-size:13px; margin-bottom:24px; }
+.price-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:12px; }
+.price-card {
+  background:var(--card); border-radius:14px; padding:20px;
+  border:1px solid var(--border); text-align:center; position:relative;
+}
+.price-card.popular { border-color:var(--gold); background:linear-gradient(180deg, #1a1a2e 0%, #16213e 100%); }
+.price-card .badge {
+  position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+  background:var(--gold); color:#000; padding:4px 14px; border-radius:12px;
+  font-size:11px; font-weight:700; white-space:nowrap;
+}
+.price-card h4 { font-size:15px; margin-bottom:12px; }
+.price-card .price { font-size:32px; font-weight:900; color:var(--accent); }
+.price-card .price small { font-size:13px; color:var(--text2); font-weight:400; }
+.price-card ul { list-style:none; margin:16px 0; text-align:left; }
+.price-card li { padding:5px 0; font-size:12px; color:var(--text2); }
+.price-card li::before { content:"✓ "; color:var(--green); font-weight:700; }
+.price-card .buy-btn {
+  width:100%; padding:10px; border-radius:10px; border:none;
+  font-size:14px; font-weight:600; cursor:pointer; margin-top:8px;
+}
+.price-card .buy-btn.primary { background:linear-gradient(135deg, #ff2d55, #ff6b81); color:#fff; }
+.price-card .buy-btn.secondary { background:transparent; border:2px solid var(--accent); color:var(--accent); }
+
+/* Contact */
+.contact-section { text-align:center; padding:0 0 60px; }
+.contact-section h2 { font-size:20px; margin-bottom:8px; }
+.contact-section p { color:var(--text2); font-size:13px; margin-bottom:16px; }
+.contact-box {
+  background:var(--card); border-radius:16px; padding:24px;
+  border:1px solid var(--border); display:inline-block; text-align:center;
+}
+.contact-box .wx { font-size:16px; font-weight:700; color:var(--accent); }
+.contact-box .email { font-size:13px; color:var(--text2); margin-top:4px; }
+
+/* Modal */
+.modal-overlay {
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.7); z-index:200; align-items:center; justify-content:center;
+}
+.modal-overlay.show { display:flex; }
+.modal {
+  background:var(--card); border-radius:16px; padding:24px;
+  border:1px solid var(--border); max-width:360px; width:90%; text-align:center;
+}
+.modal h3 { margin-bottom:8px; }
+.modal p { color:var(--text2); font-size:13px; margin-bottom:16px; line-height:1.6; }
+.modal .qr { width:140px; height:140px; background:var(--bg); border-radius:12px; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; color:var(--text2); font-size:12px; border:1px solid var(--border); }
+.modal .close-btn {
+  padding:10px 30px; border-radius:10px; border:1px solid var(--border);
+  background:transparent; color:var(--text); font-size:14px; cursor:pointer;
+}
+
+/* Anim */
+@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.animate-in { animation:fadeIn 0.4s ease-out; }
+
+/* Loading */
+.spinner { display:none; width:20px; height:20px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.gen-btn.loading .spinner { display:inline-block; }
+.gen-btn.loading .btn-text { display:none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">文案生成器</div>
+  <button class="header-cta" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">升级Pro</button>
+</div>
+
+<div class="hero">
+  <h1>AI帮你写<span class="hl">爆款文案</span></h1>
+  <p>小红书笔记 · 抖音脚本 · 朋友圈营销 · 产品卖点<br>输入关键词，秒出专业文案</p>
+  <div class="quick-stats">
+    <div class="stat-item"><div class="stat-num">3秒</div><div class="stat-label">生成速度</div></div>
+    <div class="stat-item"><div class="stat-num">10+</div><div class="stat-label">文案模板</div></div>
+    <div class="stat-item"><div class="stat-num">免费</div><div class="stat-label">每日额度</div></div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Generator -->
+  <div class="tool-card animate-in">
+    <h3>📝 文案生成器 <span style="font-size:11px;color:var(--accent);font-weight:400;margin-left:auto;" id="quota">今日剩余: 3次</span></h3>
+    <p class="desc">选择类型，输入关键词，一键生成</p>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-type="xhs">📕 小红书</button>
+      <button class="tab" data-type="douyin">🎵 抖音脚本</button>
+      <button class="tab" data-type="wechat">💬 朋友圈</button>
+      <button class="tab" data-type="product">🛍 产品文案</button>
+    </div>
+
+    <div class="input-group">
+      <label>产品/主题</label>
+      <input type="text" id="topic" placeholder="例如：氨基酸洗面奶、考研课程、健身私教...">
+    </div>
+    <div class="input-group">
+      <label>核心卖点/关键词</label>
+      <input type="text" id="keywords" placeholder="例如：温和不刺激、通过率90%、一个月瘦10斤...">
+    </div>
+
+    <div class="presets" id="stylePresets">
+      <button class="preset active" data-style="爆款">🔥 爆款风格</button>
+      <button class="preset" data-style="专业">💼 专业风格</button>
+      <button class="preset" data-style="故事">📖 故事叙述</button>
+      <button class="preset" data-style="对比">⚖️ 对比种草</button>
+      <button class="preset" data-style="干货">📚 干货清单</button>
+    </div>
+
+    <button class="gen-btn" id="genBtn" onclick="generate()">
+      <span class="spinner"></span>
+      <span class="btn-text">✨ 生成文案</span>
+    </button>
+
+    <div class="result" id="result">
+      <div class="result-content" id="resultContent"></div>
+      <div class="result-actions">
+        <button onclick="copyResult()">📋 一键复制</button>
+        <button onclick="regenerate()">🔄 换一版</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pricing -->
+  <div class="pricing-section" id="pricing">
+    <h2>💎 升级方案</h2>
+    <p class="psub">每日免费3次 · 付费无限畅用</p>
+    <div class="price-cards">
+      <div class="price-card">
+        <h4>免费版</h4>
+        <div class="price">¥0</div>
+        <ul>
+          <li>每天 3 次生成</li>
+          <li>4种文案类型</li>
+          <li>5种写作风格</li>
+          <li>基础模板库</li>
+        </ul>
+        <button class="buy-btn secondary">当前方案</button>
+      </div>
+      <div class="price-card popular">
+        <div class="badge">最划算</div>
+        <h4>月度会员</h4>
+        <div class="price">¥19.9<small>/月</small></div>
+        <ul>
+          <li>无限次生成</li>
+          <li>全部文案类型</li>
+          <li>全部写作风格</li>
+          <li>优先新功能</li>
+          <li>导出Word/PDF</li>
+        </ul>
+        <button class="buy-btn primary" onclick="showPayModal('月度会员', '19.9元/月')">立即开通</button>
+      </div>
+      <div class="price-card">
+        <h4>年度会员</h4>
+        <div class="price">¥99<small>/年</small></div>
+        <ul>
+          <li>月度全部权益</li>
+          <li>省140元/年</li>
+          <li>专属模板定制</li>
+          <li>1v1文案优化</li>
+        </ul>
+        <button class="buy-btn primary" onclick="showPayModal('年度会员', '99元/年')">立即开通</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact -->
+  <div class="contact-section">
+    <h2>📱 需要定制？</h2>
+    <p>企业批量文案、定制模板、API接入</p>
+    <div class="contact-box">
+      <div class="wx">微信：__________（填写你的微信）</div>
+      <div class="email">邮箱：__________（填写你的邮箱）</div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal">
+    <h3>🎉 即将开通</h3>
+    <p id="payInfo">月度会员 · 19.9元/月</p>
+    <div class="qr">扫码支付<br>（放你的收款码）</div>
+    <p style="font-size:11px;color:var(--text2);">支付后截图发微信，立即开通</p>
+    <button class="close-btn" onclick="closePayModal()">关闭</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// State
+let quota = 3;
+let currentType = 'xhs';
+let currentStyle = '爆款';
+let lastResult = '';
+
+// Tabs
+document.querySelectorAll('#tabs .tab').forEach(t => {
+  t.addEventListener('click', function() {
+    document.querySelectorAll('#tabs .tab').forEach(x => x.classList.remove('active'));
+    this.classList.add('active');
+    currentType = this.dataset.type;
+  });
+});
+
+// Style presets
+document.querySelectorAll('#stylePresets .preset').forEach(p => {
+  p.addEventListener('click', function() {
+    document.querySelectorAll('#stylePresets .preset').forEach(x => x.classList.remove('active'));
+    this.classList.add('active');
+    currentStyle = this.dataset.style;
+  });
+});
+
+// Toast
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Copy
+async function copyResult() {
+  if (!lastResult) return;
+  try {
+    await navigator.clipboard.writeText(lastResult);
+    showToast('已复制到剪贴板');
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = lastResult; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('已复制到剪贴板');
+  }
+}
+
+// Regenerate
+function regenerate() { generate(); }
+
+// Show pay modal
+function showPayModal(plan, price) {
+  document.getElementById('payInfo').textContent = plan + ' · ' + price;
+  document.getElementById('payModal').classList.add('show');
+}
+function closePayModal() {
+  document.getElementById('payModal').classList.remove('show');
+}
+
+// Generate
+function generate() {
+  if (quota <= 0) {
+    showToast('今日免费额度已用完，升级Pro无限畅用');
+    document.getElementById('pricing').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+
+  const topic = document.getElementById('topic').value.trim();
+  const keywords = document.getElementById('keywords').value.trim();
+  if (!topic && !keywords) { showToast('请至少输入主题或关键词'); return; }
+
+  // UI loading
+  const btn = document.getElementById('genBtn');
+  btn.classList.add('loading'); btn.disabled = true;
+
+  setTimeout(() => {
+    btn.classList.remove('loading'); btn.disabled = false;
+    quota--;
+    document.getElementById('quota').textContent = '今日剩余: ' + quota + '次';
+
+    const result = buildCopywriting(currentType, currentStyle, topic, keywords);
+    lastResult = result;
+    document.getElementById('resultContent').textContent = result;
+    document.getElementById('result').classList.add('show', 'animate-in');
+    document.getElementById('result').scrollIntoView({behavior:'smooth'});
+  }, 1500);
+}
+
+function buildCopywriting(type, style, topic, keywords) {
+  const t = topic || '产品';
+  const k = keywords || '品质好，值得信赖';
+
+  const templates = {
+    xhs: {
+      '爆款': `姐妹们！！这个${t}真的绝了啊啊啊😭\n\n我真的后悔没有早点遇到它！！！\n\n作为一个用过不下20款${t}的人，我负责任地说——这款真的不一样👇\n\n✨ ${k}\n✨ 性价比超高，学生党也毫无压力\n✨ 用了一周，效果肉眼可见\n\n之前花冤枉钱买了那么多大牌，没想到这个才是真爱💕\n\n真心建议还在纠结的姐妹冲，不踩雷！！\n\n#${t}推荐 #好物分享 #学生党必备 #真实测评`,
+
+      '专业': `【深度测评】${t}全方位使用报告\n\n📊 测评维度：\n1. 核心性能：${k}\n2. 使用体验：手感/肤感/操作流畅度\n3. 性价比：同价位横向对比\n4. 持久表现：连续使用7天实测\n\n🔬 核心优势分析：\n• 技术层面：采用先进工艺，性能稳定\n• 体验层面：细节设计出众，${k}\n• 价格层面：定位合理，值得入手\n\n📋 综合评分：4.8/5\n适合人群：注重品质、追求性价比的用户\n\n#${t}测评 #理性消费 #好物评测`,
+
+      '故事': `分享一下我和${t}的故事📖\n\n三个月前，我还在一堆同类型产品里反复横跳。\n\n每次买东西都要看几百条评论，比来比去最后还是踩雷...\n\n直到朋友推荐了它。\n\n第一天：试试看吧，反正也不贵\n第三天：好像真的有点不一样？\n一周后：为什么没早点买！\n\n现在用了快一个月，我想说——\n\n${k}真的不是吹的。\n\n有些东西，只有用过的人才知道它的好。\n\n希望每一个犹豫的你，都能少走弯路💪\n\n#真实分享 #${t} #好物推荐`,
+
+      '对比': `A vs B：${t}怎么选？一篇讲清楚！\n\n市面上的${t}太多了，到底选哪个？\n\n左边是大牌：贵但品质有保障\n右边是平价：便宜但怕踩雷\n\n我帮你对比如下👇\n\n【品质】${k} ← 完胜\n【价格】性价比超高 ← 学生党友好\n【使用感】超过预期 ← 惊喜\n【持久度】表现稳定 ← 放心\n\n🏆 结论：\n如果你追求大牌但预算有限，选它没错\n如果你被平价产品坑怕了，选它没错\n如果你只是想买个好用的，选它没错\n\n不吹不黑，用过都懂。\n\n#${t}对比 #购物指南 #种草`,
+
+      '干货': `【保姆级教程】${t}选购避坑指南🧭\n\n买${t}最容易踩的5个坑：\n\n❌ 坑1：只看价格不看品质\n→ 低价款的隐藏成本比你想象的高\n\n❌ 坑2：盲目跟风买网红款\n→ 适合别人的不一定适合你\n\n❌ 坑3：忽略核心参数\n→ ${k}才是真正重要的指标\n\n❌ 坑4：不看成份/材质\n→ 直接决定使用体验和安全\n\n❌ 坑5：不看售后保障\n→ 正规渠道+完善售后=安心\n\n✅ 正确选购姿势：\n1. 明确自己的核心需求\n2. 关注${k}这个关键指标\n3. 多看真实用户评价\n4. 选择有保障的渠道\n\n收藏这篇，买${t}不踩雷！\n\n#${t}攻略 #避坑指南 #干货分享`
+    },
+
+    douyin: {
+      '爆款': `【口播脚本 · 15秒】\n\n镜头1：夸张表情 + 震惊字幕\n"你敢信？这个${t}居然只要这个价？！"\n\n镜头2：展示产品特写\n"看清楚啊——${k}"\n\n镜头3：使用前后对比\n"这效果，你说是几百块的我信"\n\n镜头4：对镜头\n"链接放左下角了，手慢无！"\n\n🎵 BGM：节奏感强的卡点音乐\n📱 建议竖屏拍摄\n🏷 #${t} #好物 #种草`,
+
+      '专业': `【知识科普 · 30秒】\n\n1-3秒：抛出问题\n"买${t}之前，这三点你必须知道"\n\n4-10秒：核心观点1\n"第一，${k}是硬指标，选的时候着重看这个"\n\n11-20秒：核心观点2\n"第二，别被包装骗了，看这几个细节——"\n\n21-28秒：核心观点3\n"第三，贵的不一定对，适合自己的才重要"\n\n29-30秒：引导互动\n"你买${t}踩过坑吗？评论区聊聊"\n\n🎵 BGM：轻科普风\n📱 配合文字标注3个要点\n🏷 #${t} #科普 #生活小知识`,
+
+      '故事': `【Vlog脚本 · 60秒】\n\n0-5秒：引入\n"今天想聊聊我踩过的坑..."\n\n5-15秒：痛点场景\n画面：翻看手机里以前买的不合适的产品\n"以前买${t}，只知道跟风，花了不知道多少冤枉钱"\n\n15-35秒：转折\n画面：展示现在用的产品 + 使用日常\n"直到我学会了看${k}这个关键点"\n\n35-50秒：感悟\n"有些东西不一定贵就好，懂得选才重要"\n\n50-60秒：结尾互动\n"你们买${t}最看重什么？"\n\n🎵 BGM：温馨治愈风\n📱 生活化拍摄，不要太广告感`,
+
+      '对比': `【对比评测 · 25秒】\n\n1-4秒：快速展示3-4款产品\n"市面上热门的${t}我都买回来了"\n\n5-12秒：逐个快评\n"A款：价格贵，效果一般" 打叉\n"B款：网红款，但${k}不太行" 打叉\n"C款：意外好用，性价比炸裂" 打勾\n\n13-20秒：重点推荐款特写\n"这个${k}真的惊艳到我"\n\n21-25秒：引导\n"链接在左下角，趁还有库存赶紧"\n\n🎵 BGM：快节奏对比向\n🏷 #${t}测评 #对比评测 #购物推荐`,
+
+      '干货': `【干货教程 · 45秒】\n\n1-5秒：标题字幕\n"${t}怎么选？三招教会你"\n\n6-15秒：第一招\n图文结合："第一招：看${k}"\n\n16-25秒：第二招\n实操演示："第二招：上手试这个关键步骤"\n\n26-38秒：第三招\n对比展示："第三招：避开这3个常见坑"\n\n39-45秒：总结引导\n"学会了吗？收藏防止忘记！"\n\n🎵 BGM：轻快教程风\n📱 建议加字幕和标注重点`
+    },
+
+    wechat: {
+      '爆款': `真的忍不了了，必须发个朋友圈！\n\n这个${t}也太好用了吧🔥\n\n${k}\n\n已经安利给身边所有人了，\n还没试过的赶紧！！！\n\n真的不是广告，是自来水💧\n\n用了回来感谢我~`,
+
+      '专业': `最近在研究${t}，分享几点心得：\n\n1. 核心在于${k}，这是选品的关键标准\n2. 市场上的产品良莠不齐，要学会辨别\n3. 好的${t}应该具备三个特质：品质稳定、体验出色、售后到位\n\n有同样关注这个领域的朋友可以交流~`,
+
+      '故事': `昨天翻相册，看到三个月前还在纠结买哪款${t}的自己。\n\n那时候天天刷测评，越看越不会选。\n\n后来一个朋友跟我说：别想太多，看${k}就行。\n\n一试，果然。\n\n有时候答案比我们想的简单。\n\n晚安🌙`,
+
+      '对比': `同一类${t}，贵的和便宜的有什么区别？\n\n最近做了个小实验：\n贵的A款 VS 平价的B款，各用一周。\n\n结论：贵的确实好，但B款的${k}完全不输。\n\n性价比这件事，有时候就是信息差。\n\n分享给同样在纠结的朋友~`,
+
+      '干货': `整理了一份${t}选购清单，需要的自取：\n\n✅ 必看指标：${k}\n✅ 推荐价位：XX-XX元\n✅ 避雷品牌：（此处省略3个）\n✅ 推荐渠道：官方/授权\n\n花了3小时整理的，\n希望对你有用。觉得有用的点个赞~`
+    },
+
+    product: {
+      '爆款': `🔥 ${t} —— 真的太好用了！\n\n✨ ${k}\n✨ 效果超出预期\n✨ 买了就后悔——后悔没早买！\n\n💰 限时优惠中，错过等半年\n📍 点击了解详情\n\n#${t} #好物推荐 #必买清单`,
+
+      '专业': `${t} | 产品核心参数\n\n【核心卖点】\n${k}\n\n【适用人群】\n追求品质、注重性价比的用户\n\n【产品规格】\n• 材质/成分：优质原料\n• 工艺：精工制造\n• 保障：完善售后\n\n【使用建议】\n建议搭配XX使用，效果更佳\n\n了解更多请咨询客服 📩\n\n#${t} #产品介绍 #品质之选`,
+
+      '故事': `为什么我们花了XX个月，只做这一款${t}？\n\n很多人问：你们为什么不跟风多做几个品类？\n\n因为${k}这件事，真的急不来。\n\n从原料到工艺，每一步我们都试了上百次。\n\n不为别的，就想做一个让自己满意的产品。\n\n现在，它来了。\n\n希望你也喜欢。\n\n#${t} #匠心 #好产品`,
+
+      '对比': `${t} 为什么比别人好用？\n\n市面上产品这么多，我们做对了这3件事：\n\n1️⃣ ${k} ← 这是我们的核心优势\n2️⃣ 细节把控 ← 每一处都反复打磨\n3️⃣ 用户反馈 ← 根据真实意见持续优化\n\n不比价格，比品质。\n\n试试就知道。\n\n#${t} #品质对比 #好产品会说话`,
+
+      '干货': `买${t}前必看的5个知识点：\n\n1️⃣ ${k}是最重要的指标\n2️⃣ 同样的价格，看细节做工\n3️⃣ 别被花哨宣传迷惑\n4️⃣ 认准正规渠道\n5️⃣ 售后保障同样重要\n\n收藏这篇，买${t}不踩坑 ✅\n\n#${t} #选购指南 #干货`
+    }
+  };
+
+  return (templates[type] && templates[type][style])
+    ? templates[type][style]
+    : templates['xhs']['爆款'];
+}
+</script>
+
+</body>
+</html>
